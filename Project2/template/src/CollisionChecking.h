@@ -47,4 +47,9 @@ bool isValidSquare(double x, double y, double theta, double sideLength, const st
 void debugMode(const std::vector<Robot> &robots, const std::vector<Rectangle> &obstacles,
                const std::vector<bool> &valid);
 
+// Calculate the point coordinate after rotating around pivot point with angle theta
+double pivotPointRotationX(double x, double y, double theta, double pivotX, double pivotY);
+double pivotPointRotationY(double x, double y, double theta, double pivotX, double pivotY);
+
+
 #endif
