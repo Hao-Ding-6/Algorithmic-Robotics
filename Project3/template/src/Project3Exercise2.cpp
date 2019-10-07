@@ -6,6 +6,19 @@
 
 #include <iostream>
 
+// Including SimpleSetup will pull in MOST of what you need to plan
+#include <ompl/geometric/SimpleSetup.h>
+
+// Except for the state space definitions...
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/spaces/SO2StateSpace.h>
+
+// And any planners...
+#include <ompl/geometric/planners/prm/PRM.h>
+
+// Use placeholder namespace for arguments to bound functions.
+using namespace std::placeholders;
+
 // The collision checker produced in project 2
 #include "CollisionChecking.h"
 

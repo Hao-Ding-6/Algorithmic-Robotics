@@ -7,7 +7,6 @@
 #ifndef RANDOM_TREE_H
 #define RANDOM_TREE_H
 
-#include "ompl/datastructures/NearestNeighbors.h"
 #include "ompl/geometric/planners/PlannerIncludes.h"
 
 namespace ompl
