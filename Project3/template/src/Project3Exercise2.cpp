@@ -77,12 +77,12 @@ void planWithSimpleSetupR2(const std::vector<Rectangle> &obstacles)
     // Step 4) Specify the start and goal states
     // ScopedState creates the correct state instance for the state space
     ompl::base::ScopedState<> start(r2);
-    start[0] = -0.9;
-    start[1] = -0.9;
+    start[0] = -1.3;
+    start[1] = -1.3;
 
     ompl::base::ScopedState<> goal(r2);
-    goal[0] = 0.9;
-    goal[1] = 0.9;
+    goal[0] = 1.2;
+    goal[1] = 1.2;
 
     // set the start and goal states
     ss.setStartAndGoalStates(start, goal);
@@ -162,13 +162,13 @@ void planWithSimpleSetupSE2(const std::vector<Rectangle> &obstacles)
     // The indexes correspond to the order that the StateSpace components were
     // added into the StateSpace
     ompl::base::ScopedState<> start(se2);
-    start[0] = -0.9;
-    start[1] = -0.9;
+    start[0] = -1.3;
+    start[1] = -1.3;
     start[2] = 0.0;
 
     ompl::base::ScopedState<> goal(se2);
-    goal[0] = 0.9;
-    goal[1] = 0.9;
+    goal[0] = 1.2;
+    goal[1] = 1.2;
     goal[2] = 0.0;
 
     // set the start and goal states
