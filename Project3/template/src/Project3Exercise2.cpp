@@ -5,6 +5,10 @@
 //////////////////////////////////////
 
 #include <iostream>
+#include <fstream>
+#include <cmath>
+#include <functional>
+#include <memory>
 
 // Including SimpleSetup will pull in MOST of what you need to plan
 #include <ompl/geometric/SimpleSetup.h>

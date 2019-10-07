@@ -5,6 +5,9 @@
 //////////////////////////////////////
 
 #include "RTP.h"
+#include <limits>
+#include "ompl/base/goals/GoalSampleableRegion.h"
+#include "ompl/tools/config/SelfConfig.h"
 
 // TODO: Implement RTP as described
 
@@ -69,7 +72,7 @@ void ompl::geometric::RTP::freeMemory()
     {
 //        std::vector<Motion *> motions;
 //        nn_->list(motions);
-        for (auto &motion : motions)
+        for (auto &motion : existing_motions)
         {
             if (motion->state != nullptr)
                 si_->freeState(motion->state);
@@ -106,7 +109,7 @@ ompl::base::PlannerStatus ompl::geometric::RTP::solve(const base::PlannerTermina
     if (!sampler_)
         sampler_ = si_->allocStateSampler();
 
-    OMPL_INFORM("%s: Starting planning with %u states already in data structure", getName().c_str(), nn_->size());
+    OMPL_INFORM("%s: Starting planning with %u states already in data structure", getName().c_str(), existing_motions.size());
 
     Motion *solution = nullptr;
     Motion *approxsol = nullptr;
@@ -226,7 +229,7 @@ ompl::base::PlannerStatus ompl::geometric::RTP::solve(const base::PlannerTermina
         si_->freeState(rmotion->state);
     delete rmotion;
 
-    OMPL_INFORM("%s: Created %u states", getName().c_str(), nn_->size());
+    OMPL_INFORM("%s: Created %u states", getName().c_str(), existing_motions.size());
 
     return base::PlannerStatus(solved, approximate);
 }
@@ -243,7 +246,7 @@ void ompl::geometric::RTP::getPlannerData(base::PlannerData &data) const
     if (lastGoalMotion_ != nullptr)
         data.addGoalVertex(base::PlannerDataVertex(lastGoalMotion_->state));
 
-    for (auto &motion : motions)
+    for (auto &motion : existing_motions)
     {
         if (motion->parent == nullptr)
             data.addStartVertex(base::PlannerDataVertex(motion->state));
