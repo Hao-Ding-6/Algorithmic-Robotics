@@ -3,9 +3,8 @@
 """
 Created on Sun Sep 22 18:04:44 2019
 
-@author: dinghao
+@author: Hao Ding
 """
-
 
 #!/usr/bin/env python
 from mpl_toolkits.mplot3d import Axes3D, art3d
