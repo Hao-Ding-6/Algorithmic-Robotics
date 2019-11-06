@@ -105,7 +105,7 @@ namespace ompl
                  */
                 void generateReachableSet(const SpaceInformation *si, const std::vector<double> controlValues) {
                     for (double controlValue : controlValues) {
-                        base::State tmpState = si->allocState();
+                        base::State *tmpState = si->allocState();
                         control->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
 
                         // check if the state under the control above is valid
