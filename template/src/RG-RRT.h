@@ -1,7 +1,7 @@
 ///////////////////////////////////////
 // COMP/ELEC/MECH 450/550
 // Project 4
-// Authors: FILL ME OUT!!
+// Authors: Hao Ding
 //////////////////////////////////////
 
 #ifndef RGRRT_H
@@ -16,7 +16,8 @@ namespace ompl
 {
     namespace control
     {
-        /** \brief Based on Rapidly-exploring Random Tree */
+
+        /** \brief Rapidly-exploring Random Tree */
         class RGRRT : public base::Planner
         {
         public:
@@ -91,62 +92,30 @@ namespace ompl
 
                 /** \brief Constructor that allocates memory for the state and the control */
                 Motion(const SpaceInformation *si)
-                  : state(si->allocState()), control(si->allocControl())
+                        : state(si->allocState()), control(si->allocControl())
                 {
                 }
 
                 ~Motion() = default;
 
-                void generateReachableSet(const SpaceInformation *si, int low, int high, int pickNum) {
-                    // const SpaceInformation *siC_ = (ompl::control::SpaceInformation *) si; // ???
+                /**
+                 * generate the reachable state set for current motion
+                 * @param si space information object
+                 * @param controlValues control values defined in RG-RRT.cpp
+                 */
+                void generateReachableSet(const SpaceInformation *si, const std::vector<double> controlValues) {
+                    for (double controlValue : controlValues) {
+                        base::State tmpState = si->allocState();
+                        control->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
 
-                    for (int i = 0; i < pickNum; i ++) {
-                        // set control value
-                        double interval = (high - low) / (pickNum - 1);
-                        double controlValue = low + i * interval;
-
-                        // check whether the new-generated state is reachable, if yes, add it to reachable set; else delete it
-                        Motion *generatedMotion = new Motion(si);
-                        Control *tempControl = si->allocControl();
-                        tempControl->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
-                        
-                        // use getMinControlDuration() as a small time step
-                        if (si->propagateWhileValid(this->state, tempControl, si->getMinControlDuration(), generatedMotion->state)) {
-                            generatedMotion->control = tempControl;
-                            this->reachableSet.push_back(generatedMotion); // add to reachable set
+                        // check if the state under the control above is valid
+                        if (si->propagateWhileValid(this->state, control, si->getMinControlDuration(), tmpState)) {
+                            this->reachableStates.push_back(tmpState);
                         } else {
-                            si->freeState(generatedMotion->state); // delete the state
+                            // if the tmp state can not be reached, then delete it
+                            si->freeState(tmpState);
                         }
                     }
-
-
-                    // const SpaceInformation *siControl = (ompl::control::SpaceInformation *)si;
-                    // const double bakControl = control->as<RealVectorControlSpace::ControlType>()->values[0];
-                    // for (size_t i = 0; i < controls.size(); ++i) {  // steps is fixed to 1
-                    //     base::State* newState = siControl->allocState();
-                    //     control->as<RealVectorControlSpace::ControlType>()->values[0] = controls[i];
-                    //     if (siControl->propagateWhileValid(state, control, siControl->getMinControlDuration(), newState) != 0) {
-                    //         reachable.push_back(newState);
-                    //     } else {
-                    //         siControl->freeState(newState);
-                    //     }
-                    // }
-                    // control->as<RealVectorControlSpace::ControlType>()->values[0] = bakControl;
-
-
-                    // for(int i=0; i<11; i++){
-                    //     double conValue = i * interval + low;
-                    //     Control *c = siC_->allocControl();
-                    //     auto *rcontrol =
-                    //     c->as<oc::RealVectorControlSpace::ControlType>();
-                    //     rcontrol->values[0] = conValue;
-                            
-                    //     auto *rmotion = new Motion(siC_);
-                    //     base::State *result = rmotion->state;
-                    //     siC_->propagate(motion->state, rcontrol, 1, result);
-                    //     rmotion->control = rcontrol;
-                    //     motion -> reachableSet.push_back(rmotion);            
-                    // }
                 }
 
                 /** \brief The state contained by the motion */
@@ -161,8 +130,8 @@ namespace ompl
                 /** \brief The parent motion in the exploration tree */
                 Motion *parent{nullptr};
 
-                /** \brief The reachable set of this motion */
-                std::vector<Motion *> reachableSet;
+                /** \brief The reachable state set of current motion */
+                std::vector<base::State *> reachableStates;
             };
 
             /** \brief Free the memory allocated by this planner */
@@ -198,6 +167,9 @@ namespace ompl
 
             /** \brief The most recent goal motion.  Used for PlannerData computation */
             Motion *lastGoalMotion_{nullptr};
+
+            /** \brief The vector of control values */
+            std::vector<double> controlValues;
         };
     }
 }
