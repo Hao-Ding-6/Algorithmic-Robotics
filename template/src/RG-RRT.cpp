@@ -44,7 +44,8 @@ void ompl::control::RGRRT::setup()
 {
     base::Planner::setup();
     if (!nn_)
-        nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
+        nn_.reset(new NearestNeighborsLinear<Motion *>());
+        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
 
     /**
      * redefine the distance function
