@@ -1,7 +1,7 @@
 ///////////////////////////////////////
 // COMP/ELEC/MECH 450/550
 // Project 4
-// Authors: FILL ME OUT!!
+// Authors: Hao Ding
 //////////////////////////////////////
 
 // TODO: Implement RGRRT as described
@@ -12,13 +12,27 @@
 #include "ompl/control/PathControl.h"
 #include <limits>
 
-ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "RGRRT")
+ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "RRT")
 {
     specs_.approximateSolutions = true;
     siC_ = si.get();
 
     Planner::declareParam<double>("goal_bias", this, &RGRRT::setGoalBias, &RGRRT::getGoalBias, "0.:.05:1.");
     Planner::declareParam<bool>("intermediate_states", this, &RGRRT::setIntermediateStates, &RGRRT::getIntermediateStates);
+
+    /**
+     * define the control value for different task
+     * for pendulum, we should pick 11 evenly spaced values as the pdf file said
+     * for car, we can change the number to see the difference
+     */
+     ControlSpacePtr controlSpacePtr = siC_->getControlSpace();
+     base::RealVectorBounds bounds = controlSpacePtr->as<RealVectorControlSpace>()->getBounds();
+     double low = bounds.low[0], high = bounds.high[0];
+     double interval = (high - low) / 10;
+     int numOfControlValue = 11;
+     for (int i = 0; i < numOfControlValue; i ++) {
+         this->controlValues.push_back(low + i * interval);
+     }
 }
 
 ompl::control::RGRRT::~RGRRT()
@@ -30,28 +44,24 @@ void ompl::control::RGRRT::setup()
 {
     base::Planner::setup();
     if (!nn_)
-        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
-        nn_ = std::make_shared<NearestNeighborsLinear<Motion *>>();
+        nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
 
     /**
-     * Old version
-    nn_->setDistanceFunction([this](const Motion *a, const Motion *b)
-                             {
-                                 return distanceFunction(a, b);
-                             });
-    */
-
-
-    // TODO: redefine the distance function
-    // take node in reachable set into account
-    nn_->setDistanceFunction([this](const Motion *a, const Motion *b) { 
-        for (auto node : a->reachableSet) {
-            if (distanceFunction(node, b) < distanceFunction(a, b)) {
-                return distanceFunction(node, b);
+     * redefine the distance function
+     * a: motion of tree node
+     * b: motion of random sampling node
+     */
+    nn_->setDistanceFunction([this](const Motion *a, const Motion *b) {
+        double distance2Tree = siC_->distance(a->state, b->state);
+        for (auto tmpState : a->reachableStates) {
+            double distance2Reachable = siC_->distance(tmpState, b->state);
+            if (distance2Reachable < distance2Tree) {
+                return distance2Reachable;
             }
         }
 
-        // if no node in reachable set is closer than tree node, return infinite
+        // as mentioned in the paper
+        // if no state in the reachable set is closer the tree node state, return infinity
         return std::numeric_limits<double>::infinity();
     });
 }
@@ -90,22 +100,14 @@ ompl::base::PlannerStatus ompl::control::RGRRT::solve(const base::PlannerTermina
     base::Goal *goal = pdef_->getGoal().get();
     auto *goal_s = dynamic_cast<base::GoalSampleableRegion *>(goal);
 
-    // For the pendulum you should pick 11 evenly spaced values
-    int pickNum = 11; 
-    
-    // The control space is a RealVectorControlSpace with bounds.
-    ControlSpacePtr controlSpacePtr = siC_->getControlSpace();
-    const base::RealVectorBounds &bounds = static_cast<const ompl::control::RealVectorControlSpace *>(controlSpacePtr.get())->getBounds();
-    double low = bounds.low[0], high = bounds.high[0];
-
     while (const base::State *st = pis_.nextStart())
     {
         auto *motion = new Motion(siC_);
         si_->copyState(motion->state, st);
         siC_->nullControl(motion->control);
 
-        // generate reachable set for the motion
-        motion->generateReachableSet(siC_, low, high, pickNum);
+        // generate reachable state set for current motion
+        motion->generateReachableSet(siC_, this->controlValues);
 
         nn_->add(motion);
     }
@@ -167,10 +169,10 @@ ompl::base::PlannerStatus ompl::control::RGRRT::solve(const base::PlannerTermina
                     siC_->copyControl(motion->control, rctrl);
                     motion->steps = 1;
                     motion->parent = lastmotion;
-                    lastmotion = motion;
 
-                    // generate reachable set for the motion
-                    motion->generateReachableSet(siC_, low, high, pickNum);
+                    // generate reachable state set for current motion
+                    motion->generateReachableSet(siC_, this->controlValues);
+                    lastmotion = motion;
 
                     nn_->add(motion);
                     double dist = 0.0;
@@ -209,8 +211,8 @@ ompl::base::PlannerStatus ompl::control::RGRRT::solve(const base::PlannerTermina
                 motion->steps = cd;
                 motion->parent = nmotion;
 
-                // generate reachable set for the motion
-                motion->generateReachableSet(siC_, low, high, pickNum);
+                // generate reachable state set for current motion
+                motion->generateReachableSet(siC_, this->controlValues);
 
                 nn_->add(motion);
                 double dist = 0.0;
@@ -292,7 +294,7 @@ void ompl::control::RGRRT::getPlannerData(base::PlannerData &data) const
         {
             if (data.hasControls())
                 data.addEdge(base::PlannerDataVertex(m->parent->state), base::PlannerDataVertex(m->state),
-                             ompl::control::PlannerDataEdgeControl(m->control, m->steps * delta));
+                             control::PlannerDataEdgeControl(m->control, m->steps * delta));
             else
                 data.addEdge(base::PlannerDataVertex(m->parent->state), base::PlannerDataVertex(m->state));
         }
