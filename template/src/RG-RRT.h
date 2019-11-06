@@ -109,7 +109,7 @@ namespace ompl
                         control->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
 
                         // check if the state under the control above is valid
-                        if (si->propagateWhileValid(this->state, control, si->getMinControlDuration(), tmpState)) {
+                        if (si->propagateWhileValid(this->state, control, 1, tmpState)) {
                             this->reachableStates.push_back(tmpState);
                         } else {
                             // if the tmp state can not be reached, then delete it

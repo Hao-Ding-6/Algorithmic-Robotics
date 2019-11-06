@@ -12,7 +12,7 @@
 #include "ompl/control/PathControl.h"
 #include <limits>
 
-ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "RRT")
+ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "RGRRT")
 {
     specs_.approximateSolutions = true;
     siC_ = si.get();
@@ -29,7 +29,7 @@ ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "
      base::RealVectorBounds bounds = controlSpacePtr->as<RealVectorControlSpace>()->getBounds();
      double low = bounds.low[0], high = bounds.high[0];
      double interval = (high - low) / 10;
-     int numOfControlValue = 11;
+     int numOfControlValue = 6;
      for (int i = 0; i < numOfControlValue; i ++) {
          this->controlValues.push_back(low + i * interval);
      }
@@ -45,7 +45,7 @@ void ompl::control::RGRRT::setup()
     base::Planner::setup();
     if (!nn_)
         nn_.reset(new NearestNeighborsLinear<Motion *>());
-        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this)); // segmemnt fault, need to change it to linear version
+        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
 
     /**
      * redefine the distance function
