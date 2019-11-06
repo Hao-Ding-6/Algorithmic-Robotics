@@ -45,7 +45,7 @@ void ompl::control::RGRRT::setup()
     base::Planner::setup();
     if (!nn_)
         nn_.reset(new NearestNeighborsLinear<Motion *>());
-        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
+        // nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this)); // segmemnt fault, need to change it to linear version
 
     /**
      * redefine the distance function
