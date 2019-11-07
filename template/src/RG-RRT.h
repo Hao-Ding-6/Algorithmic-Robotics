@@ -106,15 +106,14 @@ namespace ompl
                 void generateReachableSet(const SpaceInformation *si, const std::vector<double> controlValues) {
                     for (double controlValue : controlValues) {
                         base::State *tmpState = si->allocState();
-                        control->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
+                        
+                        Control *tmpControl = si->allocControl();
+                        tmpControl->as<RealVectorControlSpace::ControlType>()->values[0] = controlValue;
 
                         // check if the state under the control above is valid
-                        if (si->propagateWhileValid(this->state, control, 1, tmpState)) {
+                        if (si->propagateWhileValid(this->state, tmpControl, 1, tmpState)) {
                             this->reachableStates.push_back(tmpState);
-                        } else {
-                            // if the tmp state can not be reached, then delete it
-                            si->freeState(tmpState);
-                        }
+                        } 
                     }
                 }
 

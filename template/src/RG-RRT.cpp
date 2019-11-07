@@ -29,7 +29,7 @@ ompl::control::RGRRT::RGRRT(const SpaceInformationPtr &si) : base::Planner(si, "
      base::RealVectorBounds bounds = controlSpacePtr->as<RealVectorControlSpace>()->getBounds();
      double low = bounds.low[0], high = bounds.high[0];
      double interval = (high - low) / 10;
-     int numOfControlValue = 6;
+     int numOfControlValue = 11;
      for (int i = 0; i < numOfControlValue; i ++) {
          this->controlValues.push_back(low + i * interval);
      }

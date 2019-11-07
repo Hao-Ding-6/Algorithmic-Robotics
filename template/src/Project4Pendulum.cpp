@@ -16,6 +16,7 @@
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/control/planners/rrt/RRT.h>
 #include <ompl/control/planners/kpiece/KPIECE1.h>
+#include "ompl/tools/benchmark/Benchmark.h"
 
 // Your implementation of RG-RRT
 #include "RG-RRT.h"
@@ -81,7 +82,7 @@ public:
 };
 
 // Check for state validity
-bool isStateValid(const oc::SpaceInformation *si, const ob::State *state) 
+bool isStateValid(const oc::SpaceInformation *si, const ob::State *state)
 {
     return si->satisfiesBounds(state);
 }
@@ -162,7 +163,7 @@ void planPendulum(ompl::control::SimpleSetupPtr &ss, int choice)
         ss->setPlanner(planner);
     }
 
-    // Try to solve the problem 
+    // Try to solve the problem
     ob::PlannerStatus solved = ssi->solve(20.0);
 
     if(solved) {
@@ -181,9 +182,30 @@ void planPendulum(ompl::control::SimpleSetupPtr &ss, int choice)
     }
 }
 
-void benchmarkPendulum(ompl::control::SimpleSetupPtr &/* ss */)
+void benchmarkPendulum(ompl::control::SimpleSetupPtr &ss)
 {
     // TODO: Do some benchmarking for the pendulum
+
+    /***     Benchmark Part       ***/
+
+    ompl::tools::Benchmark::Request request(60.0, 3076.0, 20); // at least 20 run times
+    ompl::tools::Benchmark b(*ss, "Pendulum");
+
+    // RRT
+    b.addPlanner(std::make_shared<ompl::control::RRT>(ss.get()->getSpaceInformation()));
+
+    // KPIECE1
+    auto kpiece(std::make_shared<ompl::control::KPIECE1>(ss.get()->getSpaceInformation()));
+    oc::SimpleSetup *ssi = ss.get();
+    ssi->getStateSpace()->registerProjection("PendulumProjection", ompl::base::ProjectionEvaluatorPtr(new PendulumProjection(ssi->getStateSpace().get())));
+    kpiece->setProjectionEvaluator("PendulumProjection");
+    b.addPlanner(kpiece);
+
+    // RG-RRT
+    b.addPlanner(std::make_shared<ompl::control::RGRRT>(ss.get()->getSpaceInformation()));
+
+    b.benchmark(request);
+    b.saveResultsToFile();
 }
 
 int main(int /* argc */, char ** /* argv */)
@@ -230,7 +252,7 @@ int main(int /* argc */, char ** /* argv */)
 
         planPendulum(ss, planner);
     }
-    // Benchmarking
+        // Benchmarking
     else if (choice == 2)
         benchmarkPendulum(ss);
 
